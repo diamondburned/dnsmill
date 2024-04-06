@@ -37,7 +37,7 @@ func init() {
 
 	pflag.Usage = func() {
 		log.Printf("Usage:")
-		log.Printf("  %s [flags] <profile-path>\n", os.Args[0])
+		log.Printf("  %s [flags] <profile-path>\n", filepath.Base(os.Args[0]))
 		log.Printf("Flags:")
 		pflag.PrintDefaults()
 	}
