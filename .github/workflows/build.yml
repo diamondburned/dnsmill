@@ -16,6 +16,11 @@ jobs:
       - name: Build and Check
         run: nix build .#
 
-      - name: Running Help
-        run: nix run .# -- -h
-
+      - name: List libmill Providers
+        run: |
+          {
+            echo "libmill was built with the following providers:"
+            nix run .# -- --list-providers | while read -r -d $'\n' name docURL; do
+              echo "- [$name]($docURL)"
+            done
+          } >> $GITHUB_STEP_SUMMARY
