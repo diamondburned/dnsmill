@@ -189,6 +189,7 @@ func (p *Profile) Apply(ctx context.Context, logger *slog.Logger, dryRun bool) e
 		for _, record := range libdnsRecords {
 			logger.Info(
 				"applying fresh libdns record",
+				"provider", providerName,
 				"record.type", record.Type,
 				"record.name", record.Name,
 				"record.value", record.Value)
@@ -215,6 +216,7 @@ func (p *Profile) Apply(ctx context.Context, logger *slog.Logger, dryRun bool) e
 		for _, record := range libdnsRecords {
 			logger.Info(
 				"applied libdns record",
+				"provider", providerName,
 				"record.id", record.ID,
 				"record.type", record.Type,
 				"record.name", record.Name,
