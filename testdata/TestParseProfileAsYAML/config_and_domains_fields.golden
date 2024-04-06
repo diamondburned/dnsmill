@@ -1,0 +1,8 @@
+dnsmill.testResult[*libdb.so/dnsmill.Profile]{Result: &dnsmill.Profile{
+	Config: dnsmill.Config{DuplicatePolicy: dnsmill.DuplicatePolicy("overwrite")},
+	Domains: map[dnsmill.Domain]dnsmill.SubdomainRecords{dnsmill.Domain("libdb.so"): {
+		dnsmill.Subdomain("@"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{
+			"127.0.0.1",
+		}},
+	}},
+}}

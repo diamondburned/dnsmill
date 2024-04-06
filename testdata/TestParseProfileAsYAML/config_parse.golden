@@ -1,0 +1,4 @@
+dnsmill.testResult[*libdb.so/dnsmill.Profile]{Result: &dnsmill.Profile{
+	Config:  dnsmill.Config{DuplicatePolicy: dnsmill.DuplicatePolicy("overwrite")},
+	Domains: map[dnsmill.Domain]dnsmill.SubdomainRecords{},
+}}

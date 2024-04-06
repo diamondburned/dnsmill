@@ -1,0 +1,3 @@
+dnsmill.testResult[*libdb.so/dnsmill.Profile]{Error: &errors.errorString{
+	s: "error unmarshaling JSON: while decoding JSON: failed to parse profile config JSON: invalid DuplicatePolicy: asdsald",
+}}

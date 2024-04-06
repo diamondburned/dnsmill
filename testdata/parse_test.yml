@@ -1,0 +1,86 @@
+# config parse
+
+config:
+  duplicatePolicy: overwrite
+
+---
+# invalid duplicate policy
+
+config:
+  duplicatePolicy: asdsald
+
+---
+# config and domains fields
+
+config:
+  duplicatePolicy: overwrite
+
+domains:
+  libdb.so:
+    "@":
+      hosts: [127.0.0.1]
+
+---
+# config with flattened domains
+
+config:
+  duplicatePolicy: overwrite
+
+libdb.so:
+  "@": [127.0.0.1]
+
+---
+# subdomain with single IPv4 record
+
+libdb.so:
+  local: 127.0.0.1
+
+---
+# subdomain with hostname
+
+libdb.so:
+  local: localhost
+
+---
+# subdomain with mixed IPv4, IPv6, and hostname
+
+libdb.so:
+  local:
+    - 127.0.0.1
+    - ::1
+    - localhost
+
+---
+# subdomain with CNAME record
+
+libdb.so:
+  local:
+    cname: google.com.
+
+---
+# subdomain with bad record
+
+libdb.so:
+  local:
+    hosts: [localhost]
+    cname: google.com.
+
+---
+# provider with a list of domains
+
+providers:
+  cloudflare: [libdb.so]
+
+libdb.so:
+  local: localhost
+
+---
+# provider with a proper config
+
+providers:
+  cloudflare:
+    domains:
+      - libdb.so
+
+libdb.so:
+  local: localhost
