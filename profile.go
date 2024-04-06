@@ -186,15 +186,12 @@ func (p *Profile) Apply(ctx context.Context, logger *slog.Logger, dryRun bool) e
 			return fmt.Errorf("failed to convert records for %q: %w", domain, err)
 		}
 
-		// We're potentially logging a lot, so check if debug is even enabled.
-		if logger.Enabled(ctx, slog.LevelDebug) {
-			for _, record := range libdnsRecords {
-				logger.Info(
-					"applying fresh libdns record",
-					"record.type", record.Type,
-					"record.name", record.Name,
-					"record.value", record.Value)
-			}
+		for _, record := range libdnsRecords {
+			logger.Info(
+				"applying fresh libdns record",
+				"record.type", record.Type,
+				"record.name", record.Name,
+				"record.value", record.Value)
 		}
 
 		if dryRun {
@@ -215,16 +212,13 @@ func (p *Profile) Apply(ctx context.Context, logger *slog.Logger, dryRun bool) e
 			return fmt.Errorf("failed to apply records for %q: %w", domain, err)
 		}
 
-		// Same as above.
-		if logger.Enabled(ctx, slog.LevelInfo) {
-			for _, record := range libdnsRecords {
-				logger.Info(
-					"applied libdns record",
-					"record.id", record.ID,
-					"record.type", record.Type,
-					"record.name", record.Name,
-					"record.value", record.Value)
-			}
+		for _, record := range libdnsRecords {
+			logger.Info(
+				"applied libdns record",
+				"record.id", record.ID,
+				"record.type", record.Type,
+				"record.name", record.Name,
+				"record.value", record.Value)
 		}
 
 		return nil

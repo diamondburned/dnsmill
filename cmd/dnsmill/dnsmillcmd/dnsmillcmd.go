@@ -57,8 +57,13 @@ func Main() {
 		os.Exit(1)
 	}
 
+	slogLevel := slog.LevelInfo
+	if verbose {
+		slogLevel = slog.LevelDebug
+	}
+
 	slogHandler := tint.NewHandler(os.Stderr, &tint.Options{
-		Level:   slog.LevelInfo,
+		Level:   slogLevel,
 		NoColor: os.Getenv("NO_COLOR") != "" || !isatty.IsTerminal(os.Stderr.Fd()),
 	})
 
@@ -110,18 +115,14 @@ func run(ctx context.Context, logger *slog.Logger, profilePath string) bool {
 
 	f, err := os.Open(profilePath)
 	if err != nil {
-		logger.Error(
-			"failed to open profile",
-			"err", err)
+		logger.Error("failed to open profile", tint.Err(err))
 		return false
 	}
 	defer f.Close()
 
 	p, err := parseProfile(f)
 	if err != nil {
-		logger.Error(
-			"failed to parse profile",
-			"err", err)
+		logger.Error("failed to parse profile", tint.Err(err))
 		return false
 	}
 
@@ -129,7 +130,7 @@ func run(ctx context.Context, logger *slog.Logger, profilePath string) bool {
 	f.Close()
 
 	if err := p.Apply(ctx, logger, dryRun); err != nil {
-		logger.Error("failed to apply profile cleanly")
+		logger.Error("failed to apply profile", tint.Err(err))
 		return false
 	}
 
