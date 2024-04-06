@@ -24,7 +24,12 @@ go install libdb.so/dnsmill/cmd/dnsmill@latest
 
 ### Nix Flake
 
-TODO.
+The repository contains a Nix flake that you can use to build and run dnsmill.
+To do so, clone the repository and run the following command:
+
+```sh
+nix run .#
+```
 
 ## Usage
 
