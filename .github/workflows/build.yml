@@ -1,0 +1,21 @@
+name: Build and Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Build and Check
+        run: nix build .#
+
+      - name: Running Help
+        run: nix run .# -- -h
+
