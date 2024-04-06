@@ -1,0 +1,8 @@
+config:
+  duplicatePolicy: overwrite # or error
+
+providers:
+  cloudflare: [libdb.so]
+
+libdb.so:
+  dnsmill_test: localhost # set dnsmill_test.libdb.so to 127.0.0.1
