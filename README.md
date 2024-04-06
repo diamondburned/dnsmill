@@ -73,6 +73,47 @@ Apr  6 03:36:05.557 INF applied libdns record profile=profile.yml domain=libdb.s
 Apr  6 03:36:05.557 INF applied libdns record profile=profile.yml domain=libdb.so provider=cloudflare record.id=47c54fd81e07ee8bde61ef0761838f01 record.type=A record.name=dnsmill_test record.value=127.0.0.1
 ```
 
+## Extending
+
+You can extend dnsmill with more DNS providers that libdns supports. To do so,
+you must first create a new Go module that contains a new package main that
+runs [dnsmillcmd]. For example:
+
+```sh
+go mod init localhost/dnsmill-custom
+cat<<EOF > main.go
+package main
+
+import (
+    "libdb.so/dnsmill/cmd/dnsmillcmd"
+    _ "libdns.so/dnsmill/providers"
+    _ "localhost/dnsmill-custom/vercel" # add a custom Vercel provider
+)
+
+func main() {
+    dnsmillcmd.Main()
+}
+EOF
+```
+
+Then, you'll need to write a small package that wraps around libdns's provider.
+To help with that, you can refer to the [Vercel
+provider](./providers/vercel/vercel.go) in this repository. Here, the package
+is put in the `vercel` directory:
+
+```md
+- dnsmill-custom/ # module localhost/dnsmill-custom
+  - main.go
+  - go.mod
+  - go.sum
+  - vercel/
+    - vercel.go
+```
+
+Then, you can build and run the package as usual.
+
+[dnsmillcmd]: https://pkg.go.dev/libdb.so/dnsmill/cmd/dnsmillcmd
+
 ## Name Origin
 
 The name is a combination of DNS and milling (like mill or milling machine).

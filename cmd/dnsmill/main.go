@@ -4,7 +4,6 @@ package main
 
 import (
 	"libdb.so/dnsmill/cmd/dnsmill/dnsmillcmd"
-
 	_ "libdb.so/dnsmill/providers"
 )
 
