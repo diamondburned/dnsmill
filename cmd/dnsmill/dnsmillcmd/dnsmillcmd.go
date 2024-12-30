@@ -62,10 +62,17 @@ func Main() {
 		slogLevel = slog.LevelDebug
 	}
 
-	slogHandler := tint.NewHandler(os.Stderr, &tint.Options{
-		Level:   slogLevel,
-		NoColor: os.Getenv("NO_COLOR") != "" || !isatty.IsTerminal(os.Stderr.Fd()),
-	})
+	var slogHandler slog.Handler
+	if jsonLog {
+		slogHandler = slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slogLevel,
+		})
+	} else {
+		slogHandler = tint.NewHandler(os.Stderr, &tint.Options{
+			Level:   slogLevel,
+			NoColor: os.Getenv("NO_COLOR") != "" || !isatty.IsTerminal(os.Stderr.Fd()),
+		})
+	}
 
 	logger := slog.New(slogHandler)
 	slog.SetDefault(logger)

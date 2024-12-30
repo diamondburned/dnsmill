@@ -9,8 +9,9 @@
       self,
       nixpkgs,
       flake-utils,
-    }:
-    flake-utils.lib.eachDefaultSystem (
+    }@inputs:
+
+    (flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
@@ -44,6 +45,14 @@
         };
 
         formatter = pkgs.nixfmt-rfc-style;
+
+        checks = import ./nix/checks.nix { inherit pkgs self; };
       }
-    );
+    ))
+    // {
+      nixosModules = rec {
+        default = dnsmill;
+        dnsmill = import ./nix/module.nix inputs;
+      };
+    };
 }
