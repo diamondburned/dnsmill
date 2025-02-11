@@ -19,7 +19,7 @@
       {
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
-            go_1_21
+            go
             gopls
             gotools
             self.formatter.${system}

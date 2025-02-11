@@ -9,6 +9,7 @@
         imports = [ self.nixosModules.dnsmill ];
 
         services.dnsmill = {
+          enable = true;
           profiles."test" = {
             config = {
               duplicatePolicy = "overwrite";

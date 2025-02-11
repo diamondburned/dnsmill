@@ -105,11 +105,22 @@ in
 
 {
   options.services.dnsmill = {
+    enable = mkEnableOption "dnsmill";
+
     profiles = mkOption {
       type = types.attrsOf profileType;
+      default = { };
       description = ''
         A map of profiles to their configuration.
       '';
+    };
+
+    finalProfiles = mkOption {
+      type = types.attrsOf types.path;
+      description = ''
+        A map of profiles to their final configuration as JSON paths.
+      '';
+      readOnly = true;
     };
 
     environment = mkOption {
@@ -141,36 +152,45 @@ in
   # https://gist.github.com/udf/4d9301bdc02ab38439fd64fbda06ea43
 
   # Configure only systemd.services.
-  config.systemd.services = mkMerge (
-    mapAttrsToList (
-      (
-        profileName: profile:
+  config = {
+    services.dnsmill.finalProfiles = mapAttrs (
+      profileName: profile:
+      let
+        finalJSON = builtins.toJSON (removeAttrs profile [ "enable" ]);
+        configFile = pkgs.writeText "dnsmill-profile-${profileName}.json" finalJSON;
+      in
+      configFile
+    ) config.services.dnsmill.profiles;
 
-        let
-          finalProfile = builtins.toJSON (removeAttrs profile [ "enable" ]);
-          configFile = pkgs.writeText "dnsmill-profile.json" finalProfile;
-        in
-
-        {
-          "dnsmill@${profileName}" = {
-            enable = profile.enable;
-            description = "dnsmill profile ${profileName}";
-            environment = config.services.dnsmill.environment;
-            serviceConfig = {
-              Type = "oneshot";
-              ExecStart = "${getExe config.services.dnsmill.package} -f json ${configFile}";
-              Restart = "on-abnormal";
-              RestartSec = 30;
-              EnvironmentFile = config.services.dnsmill.environmentFile;
+    systemd.services = mkIf config.services.dnsmill.enable (
+      mkMerge (
+        mapAttrsToList (
+          (profileName: profile: {
+            "dnsmill@${profileName}" = {
+              enable = profile.enable;
+              description = "dnsmill profile ${profileName}";
+              environment = config.services.dnsmill.environment;
+              serviceConfig = {
+                Type = "oneshot";
+                ExecStart = escapeShellArgs [
+                  (getExe config.services.dnsmill.package)
+                  "-f"
+                  "json"
+                  (config.services.dnsmill.finalProfiles.${profileName})
+                ];
+                Restart = "on-abnormal";
+                RestartSec = 30;
+                EnvironmentFile = config.services.dnsmill.environmentFile;
+              };
+              startLimitBurst = 5;
+              startLimitIntervalSec = 5 * 60; # 5 minutes;
+              after = [ "network.target" ];
+              requires = [ "network.target" ];
+              wantedBy = [ "multi-user.target" ];
             };
-            startLimitBurst = 5;
-            startLimitIntervalSec = 5 * 60; # 5 minutes;
-            after = [ "network.target" ];
-            requires = [ "network.target" ];
-            wantedBy = [ "multi-user.target" ];
-          };
-        }
+          })
+        ) config.services.dnsmill.profiles
       )
-    ) config.services.dnsmill.profiles
-  );
+    );
+  };
 }
