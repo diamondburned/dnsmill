@@ -15,10 +15,13 @@ config:
 config:
   duplicatePolicy: overwrite
 
-domains:
+providers:
+  cloudflare:
+    zones: [libdb.so]
+
+records:
   libdb.so:
-    "@":
-      hosts: [127.0.0.1]
+    hosts: [127.0.0.1]
 
 ---
 # config with flattened domains
@@ -26,61 +29,73 @@ domains:
 config:
   duplicatePolicy: overwrite
 
-libdb.so:
-  "@": [127.0.0.1]
+providers:
+  cloudflare:
+    zones: [libdb.so]
+
+libdb.so: [127.0.0.1]
 
 ---
 # subdomain with single IPv4 record
 
-libdb.so:
-  local: 127.0.0.1
+providers:
+  cloudflare:
+    zones: [libdb.so]
+
+local.libdb.so: 127.0.0.1
 
 ---
 # subdomain with hostname
 
-libdb.so:
-  local: localhost
+providers:
+  cloudflare:
+    zones: [libdb.so]
+
+local.libdb.so: localhost
 
 ---
 # subdomain with mixed IPv4, IPv6, and hostname
 
-libdb.so:
-  local:
-    - 127.0.0.1
-    - ::1
-    - localhost
+providers:
+  cloudflare:
+    zones: [libdb.so]
+
+local.libdb.so:
+  - 127.0.0.1
+  - ::1
+  - localhost
 
 ---
 # subdomain with CNAME record
 
-libdb.so:
-  local:
-    cname: google.com.
+providers:
+  cloudflare:
+    zones: [libdb.so]
+
+local.libdb.so:
+  cname: google.com.
 
 ---
 # subdomain with bad record
 
-libdb.so:
-  local:
-    hosts: [localhost]
-    cname: google.com.
+local.libdb.so:
+  hosts: [localhost]
+  cname: google.com.
 
 ---
 # provider with a list of domains
 
 providers:
-  cloudflare: [libdb.so]
+  cloudflare: [libdb.so, d14.pet, d14.place]
 
-libdb.so:
-  local: localhost
+local.libdb.so: localhost
 
 ---
 # provider with a proper config
 
 providers:
   cloudflare:
-    domains:
+    zones:
       - libdb.so
 
-libdb.so:
-  local: localhost
+local.libdb.so: localhost

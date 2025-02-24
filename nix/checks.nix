@@ -4,7 +4,7 @@
   moduleConfig = pkgs.nixosTest {
     name = "moduleConfig";
     nodes.machine =
-      { ... }:
+      { config, pkgs, ... }:
       {
         imports = [ self.nixosModules.dnsmill ];
 
@@ -17,10 +17,9 @@
             providers = {
               cloudflare = [ "libdb.so" ];
             };
-            domains = {
-              "libdb.so" = {
-                dnsmill_test = "localhost";
-              };
+            records = {
+              "test1.libdb.so".hosts = "localhost";
+              "test2.libdb.so".cname = "test1.libdb.so";
             };
           };
           environment = {
@@ -29,8 +28,8 @@
         };
       };
     testScript =
-      { ... }:
-      ''
+      { nodes }:
+      builtins.trace (builtins.toJSON nodes.machine.services.dnsmill.finalProfiles) ''
         machine.sleep(10)
       '';
   };

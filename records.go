@@ -9,62 +9,7 @@ import (
 	"net"
 
 	"github.com/libdns/libdns"
-	"libdb.so/dnsmill/internal/cfgutil"
 )
-
-// Domain represents a domain name.
-type Domain string
-
-// Domains represents a list of domain names.
-//
-// When parsing, it may either parse a single domain name or a list of domain
-// names.
-type Domains []Domain
-
-func (d *Domains) UnmarshalJSON(data []byte) error {
-	var items []string
-	if bytes.HasPrefix(data, []byte{'['}) {
-		if err := json.Unmarshal(data, &items); err != nil {
-			return fmt.Errorf("failed to parse Domains array: %w", err)
-		}
-	} else {
-		var item string
-		if err := json.Unmarshal(data, &item); err != nil {
-			return fmt.Errorf("failed to parse Domains string: %w", err)
-		}
-		items = []string{item}
-	}
-
-	*d = make(Domains, len(items))
-	for i, item := range items {
-		(*d)[i] = Domain(item)
-	}
-
-	return nil
-}
-
-// Subdomain represents a subdomain of a root domain. It does not include the
-// root domain itself. If "@", it represents the root domain.
-type Subdomain string
-
-// RootDomain represents the root domain as a special subdomain.
-const RootDomain Subdomain = "@"
-
-// SubdomainRecords maps subdomains to their DNS records.
-type SubdomainRecords map[Subdomain]Records
-
-// Convert converts the subdomain records into a list of [libdns.Record]s.
-func (r SubdomainRecords) Convert(ctx context.Context) ([]libdns.Record, error) {
-	var records []libdns.Record
-	for subdomain, rec := range r {
-		recs, err := rec.Convert(ctx, subdomain)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert records for %q: %w", subdomain, err)
-		}
-		records = append(records, recs...)
-	}
-	return records, nil
-}
 
 // Records represents a list of DNS records.
 //
@@ -81,7 +26,7 @@ type Records struct {
 	Hosts *HostAddresses `json:"hosts,omitempty"`
 
 	// CNAME represents a single CNAME record.
-	CNAME string `json:"cname,omitempty"`
+	CNAME *string `json:"cname,omitempty"`
 }
 
 func (r *Records) UnmarshalJSON(data []byte) error {
@@ -100,14 +45,14 @@ func (r *Records) UnmarshalJSON(data []byte) error {
 		*r = Records{Hosts: &hosts}
 
 	case '{':
-		if err := cfgutil.AssertSingleMapKey(data); err != nil {
-			return err
-		}
-
 		type recordsAlias Records
 		var records recordsAlias
 		if err := json.Unmarshal(data, &records); err != nil {
 			return fmt.Errorf("failed to parse records as Records: %w", err)
+		}
+
+		if records.Hosts != nil && records.CNAME != nil {
+			return errors.New("invalid JSON: expected either hosts or cname field, not both")
 		}
 
 		*r = Records(records)
@@ -120,7 +65,11 @@ func (r *Records) UnmarshalJSON(data []byte) error {
 
 // Convert converts the records assigned to the given subdomain into a list of
 // [libdns.Record]s.
-func (r *Records) Convert(ctx context.Context, subdomain Subdomain) ([]libdns.Record, error) {
+func (r *Records) Convert(ctx context.Context, subdomain string) ([]libdns.Record, error) {
+	if subdomain == "" {
+		subdomain = "@"
+	}
+
 	var records []libdns.Record
 
 	switch {
@@ -137,16 +86,16 @@ func (r *Records) Convert(ctx context.Context, subdomain Subdomain) ([]libdns.Re
 			}
 			records = append(records, libdns.Record{
 				Type:  t,
-				Name:  string(subdomain),
+				Name:  subdomain,
 				Value: ip.String(),
 			})
 		}
-	case r.CNAME != "":
+	case r.CNAME != nil:
 		records = []libdns.Record{
 			{
 				Type:  "CNAME",
-				Name:  string(subdomain),
-				Value: r.CNAME,
+				Name:  subdomain,
+				Value: *r.CNAME,
 			},
 		}
 	}

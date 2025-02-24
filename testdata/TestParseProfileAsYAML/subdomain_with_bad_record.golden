@@ -1,3 +1,3 @@
 dnsmill.testResult[*libdb.so/dnsmill.Profile]{Error: &errors.errorString{
-	s: `error unmarshaling JSON: while decoding JSON: failed to parse domain libdb.so JSON: expected a single map key, got 2: ["cname" "hosts"]`,
+	s: "error unmarshaling JSON: while decoding JSON: failed to parse extra records local.libdb.so JSON: invalid JSON: expected either hosts or cname field, not both",
 }}

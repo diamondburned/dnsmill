@@ -1,8 +1,7 @@
 dnsmill.testResult[*libdb.so/dnsmill.Profile]{Result: &dnsmill.Profile{
 	Config: dnsmill.Config{DuplicatePolicy: dnsmill.DuplicatePolicy("error")},
-	Domains: map[dnsmill.Domain]dnsmill.SubdomainRecords{dnsmill.Domain("libdb.so"): {
-		dnsmill.Subdomain("local"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{
-			"localhost",
-		}},
+	Providers: map[string]dnsmill.ProviderConfig{"cloudflare": {
+		Zones: dnsmill.Domains{dnsmill.Domain("libdb.so")},
 	}},
+	Records: dnsmill.DomainRecords{dnsmill.Domain("local.libdb.so"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{"localhost"}}},
 }}

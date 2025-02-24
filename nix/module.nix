@@ -35,49 +35,42 @@ let
           cloudflare = [ "libdb.so" ];
         };
         description = ''
-          Map of providers to the domains they manage.
+          Map of providers to the zones that they manage.
         '';
       };
 
-      domains = mkOption {
-        type = types.attrsOf (
-          types.attrsOf (
-            types.oneOf [
-              (types.str)
-              (types.listOf types.str)
-              (types.submodule {
-                options = {
-                  hosts = {
-                    type = types.oneOf [
-                      # single IP/host
-                      (types.str)
-                      # multiple IPs/hosts
-                      (types.listOf types.str)
-                    ];
-                    description = ''
-                      Hosts indirectly represents A and AAAA records. The host addresses are
-                      resolved into a list of IP addresses, with IPv4 addresses being handled as A
-                      records and IPv6 addresses being handled as AAAA records.
-                    '';
-                  };
-                };
-              })
-              (types.submodule {
-                option = {
-                  cname = {
-                    type = types.str;
-                    description = ''
-                      CNAME represents a single CNAME record.
-                    '';
-                  };
-                };
-              })
-            ]
-          )
-        );
+      records = mkOption {
+        # map[Domain]Records
+        type = attrsOfSubmodule {
+          hosts = mkOption {
+            type = types.nullOr (
+              types.oneOf [
+                # single IP/host
+                (types.str)
+                # multiple IPs/hosts
+                (types.listOf types.str)
+              ]
+            );
+            default = null;
+            description = ''
+              Hosts indirectly represents A and AAAA records. The host addresses are
+              resolved into a list of IP addresses, with IPv4 addresses being handled as A
+              records and IPv6 addresses being handled as AAAA records.
+            '';
+          };
+
+          cname = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = ''
+              CNAME represents a single CNAME record.
+            '';
+          };
+        };
         description = ''
-          Either a list of IP addresses or a list of hostnames for A and AAAA records, or
-          the proper submodule form of the config.
+          Records represents a list of DNS records. It is an attrset with
+          exactly a single field representing the type of record corresponding
+          to its value.
         '';
       };
     };
@@ -101,6 +94,14 @@ let
       };
     };
   };
+
+  attrsOfSubmodule =
+    options:
+    types.attrsOf (
+      types.submodule {
+        inherit options;
+      }
+    );
 in
 
 {
@@ -124,7 +125,7 @@ in
     };
 
     environment = mkOption {
-      type = types.attrsOf types.string;
+      type = types.attrsOf types.str;
       default = { };
       description = ''
         The environment variables to use for dnsmill.
@@ -157,9 +158,8 @@ in
       profileName: profile:
       let
         finalJSON = builtins.toJSON (removeAttrs profile [ "enable" ]);
-        configFile = pkgs.writeText "dnsmill-profile-${profileName}.json" finalJSON;
       in
-      configFile
+      pkgs.writeText "dnsmill-profile-${profileName}.json" finalJSON
     ) config.services.dnsmill.profiles;
 
     systemd.services = mkIf config.services.dnsmill.enable (

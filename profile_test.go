@@ -32,6 +32,7 @@ func TestParseProfileAsYAML(t *testing.T) {
 
 		t.Run(name, func(t *testing.T) {
 			p, err := parseProfileAsYAML(strings.NewReader(data))
+			t.Logf("%#v", p)
 			autogold.ExpectFile(t, testResult[*Profile]{p, err})
 		})
 	}

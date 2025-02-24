@@ -14,18 +14,18 @@ import (
 // When parsing as JSON, it can be parsed as a list of domains or the actual
 // [ProviderConfig] instance itself.
 type ProviderConfig struct {
-	// Domains lists the domains that are managed by the provider.
-	Domains Domains `json:"domains"`
+	// Zones lists the zones that are managed by the provider.
+	Zones Domains `json:"zones"`
 }
 
 func (c *ProviderConfig) UnmarshalJSON(data []byte) error {
 	switch {
 	case bytes.HasPrefix(data, []byte{'['}):
-		var domains Domains
-		if err := json.Unmarshal(data, &domains); err != nil {
+		var zones Domains
+		if err := json.Unmarshal(data, &zones); err != nil {
 			return fmt.Errorf("failed to parse ProviderConfig domains: %w", err)
 		}
-		*c = ProviderConfig{Domains: domains}
+		*c = ProviderConfig{Zones: zones}
 		return nil
 	default:
 		type alias ProviderConfig

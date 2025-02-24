@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"slices"
 
 	"github.com/invopop/yaml"
 )
@@ -25,8 +24,8 @@ type Profile struct {
 	// Note that each provider will require its own secret environment variables
 	// to be set.
 	Providers map[string]ProviderConfig `json:"providers,omitempty"`
-	// Domains maps domain names to their subdomains and DNS records.
-	Domains map[Domain]SubdomainRecords `json:"domains,omitempty"`
+	// Records is a list of each domains' DNS records.
+	Records DomainRecords `json:"records,omitempty"`
 }
 
 // NewProfile creates a new empty profile with a default config.
@@ -98,11 +97,11 @@ func (p *Profile) UnmarshalJSON(data []byte) error {
 		delete(raw, "providers")
 	}
 
-	if _, ok := raw["domains"]; ok {
-		if err := json.Unmarshal(raw["domains"], &p.Domains); err != nil {
-			return fmt.Errorf("failed to parse domains JSON in field: %w", err)
+	if _, ok := raw["records"]; ok {
+		if err := json.Unmarshal(raw["records"], &p.Records); err != nil {
+			return fmt.Errorf("failed to parse records JSON in field: %w", err)
 		}
-		delete(raw, "domains")
+		delete(raw, "records")
 		if len(raw) > 0 {
 			return fmt.Errorf("unexpected fields in profile JSON: %v", raw)
 		}
@@ -110,13 +109,13 @@ func (p *Profile) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	p.Domains = make(map[Domain]SubdomainRecords, len(raw))
+	p.Records = make(DomainRecords, len(raw))
 	for domain, records := range raw {
-		var v SubdomainRecords
+		var v Records
 		if err := json.Unmarshal(records, &v); err != nil {
-			return fmt.Errorf("failed to parse domain %s JSON: %w", domain, err)
+			return fmt.Errorf("failed to parse extra records %s JSON: %w", domain, err)
 		}
-		p.Domains[Domain(domain)] = v
+		p.Records[Domain(domain)] = v
 	}
 
 	return nil
@@ -124,28 +123,12 @@ func (p *Profile) UnmarshalJSON(data []byte) error {
 
 // Validate validates the profile.
 func (p *Profile) Validate() error {
-	// Ensure that every domain is known by exactly one provider.
-	for domain := range p.Domains {
-		name, err := p.findDomainProviderName(domain)
-		if err != nil {
-			return err
-		}
-		if _, err = getProvider(name); err != nil {
-			return fmt.Errorf("domain %q: %w", domain, err)
-		}
+	_, err := mapRootDomains(p)
+	if err != nil {
+		return err
 	}
 
 	return nil
-}
-
-func (p *Profile) findDomainProviderName(domain Domain) (string, error) {
-	for name, config := range p.Providers {
-		if slices.Contains(config.Domains, domain) {
-			return name, nil
-		}
-	}
-
-	return "", fmt.Errorf("domain %q is not managed by any provider", domain)
 }
 
 // Apply applies the profile to the DNS providers.
@@ -158,12 +141,6 @@ func (p *Profile) findDomainProviderName(domain Domain) (string, error) {
 // returning the error. This way, the profile is applied as much as possible
 // before failing. Multiple errors will be joined using [errors.Join].
 func (p *Profile) Apply(ctx context.Context, logger *slog.Logger, dryRun bool) error {
-	// Ensure that the profile is valid before applying it.
-	// This way, any config errors are caught early.
-	if err := p.Validate(); err != nil {
-		return fmt.Errorf("failed to validate profile: %w", err)
-	}
-
 	providers := make(map[string]Provider, len(p.Providers))
 	for name := range p.Providers {
 		factory, err := getProvider(name)
@@ -177,19 +154,15 @@ func (p *Profile) Apply(ctx context.Context, logger *slog.Logger, dryRun bool) e
 		providers[name] = p
 	}
 
-	apply := func(domain Domain, records SubdomainRecords, logger *slog.Logger) error {
-		providerName, _ := p.findDomainProviderName(domain)
-		provider := providers[providerName]
-
-		libdnsRecords, err := records.Convert(ctx)
+	apply := func(root mappedRootDomain, logger *slog.Logger) error {
+		libdnsRecords, err := root.Subdomains.Convert(ctx, root.RootDomain)
 		if err != nil {
-			return fmt.Errorf("failed to convert records for %q: %w", domain, err)
+			return fmt.Errorf("failed to convert records for %q: %w", root.RootDomain, err)
 		}
 
 		for _, record := range libdnsRecords {
 			logger.Info(
 				"applying fresh libdns record",
-				"provider", providerName,
 				"record.type", record.Type,
 				"record.name", record.Name,
 				"record.value", record.Value)
@@ -200,24 +173,23 @@ func (p *Profile) Apply(ctx context.Context, logger *slog.Logger, dryRun bool) e
 			return nil
 		}
 
+		provider := providers[root.ProviderName]
 		switch p.Config.DuplicatePolicy {
 		case ErrorOnDuplicate:
-			libdnsRecords, err = provider.AppendRecords(ctx, string(domain), libdnsRecords)
+			libdnsRecords, err = provider.AppendRecords(ctx, string(root.RootDomain), libdnsRecords)
 		case OverwriteDuplicate:
-			libdnsRecords, err = provider.SetRecords(ctx, string(domain), libdnsRecords)
+			libdnsRecords, err = provider.SetRecords(ctx, string(root.RootDomain), libdnsRecords)
 		default:
-			panic("unreachable")
+			panic("unknown duplicate policy")
 		}
 
 		if err != nil {
-			return fmt.Errorf("failed to apply records for %q: %w", domain, err)
+			return fmt.Errorf("failed to apply records for %q: %w", root.RootDomain, err)
 		}
 
 		for _, record := range libdnsRecords {
 			logger.Info(
 				"applied libdns record",
-				"provider", providerName,
-				"record.id", record.ID,
 				"record.type", record.Type,
 				"record.name", record.Name,
 				"record.value", record.Value)
@@ -228,13 +200,22 @@ func (p *Profile) Apply(ctx context.Context, logger *slog.Logger, dryRun bool) e
 
 	var errs []error
 
+	rootDomains, err := mapRootDomains(p)
+	if err != nil {
+		return err
+	}
+
 	// TODO: parallelize
-	for domain, records := range p.Domains {
-		logger := logger.With("domain", domain)
-		if err := apply(domain, records, logger); err != nil {
+	for _, root := range rootDomains {
+		logger := logger.With(
+			"provider", root.ProviderName,
+			"root_domain", root.RootDomain)
+
+		if err := apply(root, logger); err != nil {
 			logger.Error(
 				"cannot apply domain",
 				"err", err)
+
 			errs = append(errs, err)
 		}
 	}
