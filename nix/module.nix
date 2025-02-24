@@ -30,9 +30,17 @@ let
       };
 
       providers = mkOption {
-        type = types.attrsOf (types.listOf types.string);
+        type = attrsOfSubmodule {
+          zones = mkOption {
+            type = types.listOf types.string;
+            default = [ ];
+            description = ''
+              Zones represents a list of zones that the provider manages.
+            '';
+          };
+        };
         example = {
-          cloudflare = [ "libdb.so" ];
+          cloudflare.zones = [ "libdb.so" ];
         };
         description = ''
           Map of providers to the zones that they manage.

@@ -15,7 +15,7 @@
               duplicatePolicy = "overwrite";
             };
             providers = {
-              cloudflare = [ "libdb.so" ];
+              cloudflare.zones = [ "libdb.so" ];
             };
             records = {
               "test1.libdb.so".hosts = "localhost";
