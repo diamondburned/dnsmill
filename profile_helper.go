@@ -31,6 +31,7 @@ func mapRootDomains(p *Profile) ([]mappedRootDomain, error) {
 		for _, rootDomain := range providerConfig.Zones {
 			rootDomains = append(rootDomains, mappedRootDomain{
 				RootDomain:   rootDomain,
+				Subdomains:   DomainRecords{},
 				ProviderName: providerName,
 			})
 		}
