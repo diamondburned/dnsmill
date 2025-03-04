@@ -4,11 +4,14 @@ go 1.21.0
 
 toolchain go1.21.7
 
+// https://github.com/libdns/cloudflare/pull/14
+replace github.com/libdns/cloudflare => github.com/diamondburned/libdns-cloudflare v0.1.4-0.20250304082825-4f76fad2b46b
+
 require (
 	github.com/hexops/autogold/v2 v2.2.1
 	github.com/invopop/yaml v0.2.0
 	github.com/libdns/cloudflare v0.1.0
-	github.com/libdns/libdns v0.2.1
+	github.com/libdns/libdns v0.2.3
 	github.com/libdns/namecheap v0.0.0-20211109042440-fc7440785c8e
 	github.com/libdns/netlify v1.0.2
 	github.com/libdns/porkbun v0.1.2
