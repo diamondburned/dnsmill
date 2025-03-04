@@ -33,7 +33,7 @@
             version = self.rev or "unknown";
             src = self;
 
-            vendorHash = "sha256-kZPHwO/Hxe3cSmRqzq2d0ESf+V20T1miQ+ZMN21bs+g=";
+            vendorHash = "sha256-TBWs43eFketes2VHZBUtSJtNCYr2UXteE60nZXeXLJg=";
 
             meta = {
               description = "Declaratively set your DNS records with dnsmill, powered by libdns.";
