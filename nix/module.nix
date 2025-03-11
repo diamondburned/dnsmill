@@ -192,8 +192,8 @@ in
               };
               startLimitBurst = 5;
               startLimitIntervalSec = 5 * 60; # 5 minutes;
-              after = [ "network.target" ];
-              requires = [ "network.target" ];
+              after = [ "network-online.target" ];
+              requires = [ "network-online.target" ];
               wantedBy = [ "multi-user.target" ];
             };
           })
