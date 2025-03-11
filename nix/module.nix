@@ -186,11 +186,11 @@ in
                   "json"
                   (config.services.dnsmill.finalProfiles.${profileName})
                 ];
-                Restart = "on-abnormal";
-                RestartSec = 30;
+                Restart = "on-failure";
+                RestartSec = 5;
                 EnvironmentFile = config.services.dnsmill.environmentFile;
               };
-              startLimitBurst = 5;
+              startLimitBurst = 3;
               startLimitIntervalSec = 5 * 60; # 5 minutes;
               after = [ "network-online.target" ];
               requires = [ "network-online.target" ];
