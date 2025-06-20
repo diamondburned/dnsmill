@@ -14,28 +14,19 @@ import (
 // Not all instances of Domain types can accept subdomains.
 type Domain string
 
-// IsSubdomainOf returns true if the domain is a subdomain of the root domain.
-// It returns false if d == rootDomain.
-func (d Domain) IsSubdomainOf(rootDomain Domain) bool {
-	if d == rootDomain {
-		return false
-	}
-	if !strings.HasSuffix(string(d), "."+string(rootDomain)) {
-		return false
-	}
-	return true
-}
-
 // SubdomainOf returns the subdomain of the domain if it is a subdomain of the
-// given root domain.
+// given root domain. It returns ("", true) if d == rootDomain.
 func (d Domain) SubdomainOf(rootDomain Domain) (string, bool) {
-	if !d.IsSubdomainOf(rootDomain) {
-		return "", false
+	if d == rootDomain {
+		return "", true
 	}
-	subdomain := string(d)
-	subdomain = strings.TrimSuffix(subdomain, "."+string(rootDomain))
-	subdomain = strings.TrimSuffix(subdomain, ".")
-	return subdomain, true
+	if strings.HasSuffix(string(d), "."+string(rootDomain)) {
+		subdomain := string(d)
+		subdomain = strings.TrimSuffix(subdomain, "."+string(rootDomain))
+		subdomain = strings.TrimSuffix(subdomain, ".")
+		return subdomain, true
+	}
+	return "", false
 }
 
 // Domains represents a list of domain names.

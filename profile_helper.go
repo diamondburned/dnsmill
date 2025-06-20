@@ -39,7 +39,8 @@ func mapRootDomains(p *Profile) ([]mappedRootDomain, error) {
 
 	for domain, records := range p.Records {
 		rootDomainIx := slices.IndexFunc(rootDomains, func(d mappedRootDomain) bool {
-			return domain.IsSubdomainOf(d.RootDomain)
+			_, isSubdomain := domain.SubdomainOf(d.RootDomain)
+			return isSubdomain
 		})
 		if rootDomainIx == -1 {
 			return nil, fmt.Errorf("domain %q is not managed by any provider", domain)
