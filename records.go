@@ -74,20 +74,19 @@ func (r *Records) Convert(ctx context.Context, subdomain string) ([]libdns.Recor
 
 	switch {
 	case r.Hosts != nil:
-		ips, err := r.Hosts.ResolveIPs(ctx)
+		addrs, err := r.Hosts.ResolveIPs(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve hosts: %w", err)
 		}
-		for _, ip := range ips {
+		for _, addr := range addrs {
 			t := "AAAA"
-			if v4 := ip.To4(); v4 != nil {
+			if v4 := addr.IP.To4(); v4 != nil {
 				t = "A"
-				ip = v4
 			}
 			records = append(records, libdns.Record{
 				Type:  t,
 				Name:  subdomain,
-				Value: ip.String(),
+				Value: addr.String(),
 			})
 		}
 	case r.CNAME != nil:
@@ -127,29 +126,68 @@ func (a *HostAddresses) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// ResolveIPs resolves the IP addresses if they are hostnames and returns the IP
-// addresses. This function is not cached. [net.DefaultResolver] is used to
+// ResolveIPs resolves the address strings into [net.IPAddr]s.
+// This function is not cached. [net.DefaultResolver] is used to
 // resolve the hostnames.
-func (a *HostAddresses) ResolveIPs(ctx context.Context) ([]net.IP, error) {
-	ips := make([]net.IP, 0, len(*a))
-	for _, addr := range *a {
-		if ip := net.ParseIP(addr); ip != nil {
-			ips = append(ips, ip)
+func (a *HostAddresses) ResolveIPs(ctx context.Context) ([]net.IPAddr, error) {
+	addrs := make([]net.IPAddr, 0, len(*a))
+	for _, s := range *a {
+		if ip := net.ParseIP(s); ip != nil {
+			addrs = append(addrs, net.IPAddr{IP: ip})
 			continue
 		}
 
-		resolved, err := net.DefaultResolver.LookupIPAddr(ctx, addr)
+		if iface, err := net.InterfaceByName(s); err == nil {
+			ifaceAddrs, err := iface.Addrs()
+			if err != nil {
+				return nil, fmt.Errorf("failed to get addresses for interface %q: %w", s, err)
+			}
+
+			ifaceIPAddrs := make([]net.IPAddr, 0, len(ifaceAddrs))
+			for _, addr := range ifaceAddrs {
+				switch addr := addr.(type) {
+				case *net.IPAddr:
+					ifaceIPAddrs = append(ifaceIPAddrs, *addr)
+				case *net.IPNet:
+					ifaceIPAddrs = append(ifaceIPAddrs, net.IPAddr{IP: addr.IP})
+				default:
+					return nil, fmt.Errorf(
+						"unsupported address type %T for interface %q",
+						addr, s)
+				}
+			}
+
+			externalIPs, err := ResolveExternalIPsForLocalAddrs(ctx, ifaceIPAddrs)
+			if err != nil {
+				return addrs, fmt.Errorf(
+					"failed to resolve external IPs for interface %q using %q: %w",
+					s, ExternalIPProvider, err)
+			}
+
+			addrs = append(addrs, externalIPs...)
+			continue
+		}
+
+		if s == "external" {
+			// Special case for "external" to resolve external IPs.
+			externalIPs, err := ResolveExternalIPs(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to resolve external IPs: %w", err)
+			}
+			addrs = append(addrs, externalIPs...)
+			continue
+		}
+
+		resolved, err := net.DefaultResolver.LookupIPAddr(ctx, s)
 		if err != nil {
-			return nil, fmt.Errorf("failed to resolve %q: %w", addr, err)
+			return nil, fmt.Errorf("failed to resolve %q: %w", s, err)
 		}
 		if len(resolved) == 0 {
-			return nil, fmt.Errorf("no IP addresses found for %q", addr)
+			return nil, fmt.Errorf("no IP addresses found for %q", s)
 		}
 
-		for _, addr := range resolved {
-			ips = append(ips, addr.IP)
-		}
+		addrs = append(addrs, resolved...)
 	}
 
-	return ips, nil
+	return addrs, nil
 }

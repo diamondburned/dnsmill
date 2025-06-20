@@ -35,6 +35,8 @@
 
             vendorHash = "sha256-gT2FBsy9QVwJaS695TUYYUEUlAzdAedXnqzvciqPLCQ=";
 
+            subPackages = [ "cmd/dnsmill" ];
+
             meta = {
               description = "Declaratively set your DNS records with dnsmill, powered by libdns.";
               homepage = "https://libdb.so/dnsmill";
