@@ -155,15 +155,13 @@ func (a HostAddress) ResolveIPs(ctx context.Context) ([]net.IPAddr, error) {
 	case a.Flags.Has(HostAddressHostname):
 		return a.resolveAsHostname(ctx)
 	default:
-		for _, flag := range []HostAddressFlag{
-			HostAddressIP,
-			HostAddressInterface,
-			HostAddressHostname,
+		for _, rr := range []func(ctx context.Context) ([]net.IPAddr, error){
+			a.resolveAsIP,
+			a.resolveAsInterface,
+			a.resolveAsHostname,
+			a.resolveAsExternal,
 		} {
-			aa := a
-			aa.Flags = append(slices.Clone(aa.Flags), flag)
-
-			if addrs, err := aa.ResolveIPs(ctx); err == nil {
+			if addrs, err := rr(ctx); err == nil {
 				return addrs, nil
 			}
 		}
