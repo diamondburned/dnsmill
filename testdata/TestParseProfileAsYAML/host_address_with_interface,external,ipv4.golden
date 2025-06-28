@@ -1,0 +1,13 @@
+dnsmill.testResult[*libdb.so/dnsmill.Profile]{Result: &dnsmill.Profile{
+	Config: dnsmill.Config{DuplicatePolicy: dnsmill.DuplicatePolicy("error")},
+	Records: dnsmill.DomainRecords{dnsmill.Domain("1.libdb.so"): dnsmill.Records{
+		Hosts: &dnsmill.HostAddresses{dnsmill.HostAddress{
+			Address: "eth0",
+			Flags: dnsmill.HostAddressFlags{
+				dnsmill.HostAddressFlag("interface"),
+				dnsmill.HostAddressFlag("external"),
+				dnsmill.HostAddressFlag("ipv4"),
+			},
+		}},
+	}},
+}}

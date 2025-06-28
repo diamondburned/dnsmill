@@ -180,6 +180,12 @@ func (a HostAddress) resolveAsIP(_ context.Context) ([]net.IPAddr, error) {
 	if ip == nil {
 		return nil, fmt.Errorf("invalid IP address %q", a.Address)
 	}
+	if a.Flags.Has(HostAddressIPv4Only) && ip.To4() == nil {
+		return nil, fmt.Errorf("address %q is not a valid IPv4 address", a.Address)
+	}
+	if a.Flags.Has(HostAddressIPv6Only) && ip.To4() != nil {
+		return nil, fmt.Errorf("address %q is not a valid IPv6 address", a.Address)
+	}
 	return []net.IPAddr{{IP: ip}}, nil
 }
 
@@ -257,18 +263,35 @@ func (a HostAddress) resolveAsHostname(ctx context.Context) ([]net.IPAddr, error
 // HostAddressFlags represents a list of host address flags.
 type HostAddressFlags []HostAddressFlag
 
-func (f HostAddressFlags) Has(anyOf ...HostAddressFlag) bool {
-	for _, flag := range f {
-		if slices.Contains(anyOf, flag) {
-			return true
+// Has checks if `fs` contains all of the specified flags.
+func (fs HostAddressFlags) Has(allOf ...HostAddressFlag) bool {
+	for _, flag := range allOf {
+		if !slices.Contains(fs, flag) {
+			return false
 		}
 	}
 	return false
 }
 
-func (f HostAddressFlags) String() string {
-	strs := make([]string, len(f))
-	for i, flag := range f {
+// Is checks that `fs` contains all of the specified flags and no other flags.
+// Duplicate flags in any order are acceptable, so `([a, b, a]).Is([b, a])` is
+// true.
+func (fs HostAddressFlags) Is(allOf ...HostAddressFlag) bool {
+	fs1 := slices.Clone(fs)
+	fs2 := slices.Clone(allOf)
+
+	slices.Sort(fs1)
+	slices.Sort(fs2)
+
+	fs1 = slices.Compact(fs1)
+	fs2 = slices.Compact(fs2)
+
+	return slices.Equal(fs1, fs2)
+}
+
+func (fs HostAddressFlags) String() string {
+	strs := make([]string, len(fs))
+	for i, flag := range fs {
 		strs[i] = string(flag)
 	}
 	return strings.Join(strs, ",")
@@ -321,7 +344,7 @@ const (
 var validHostAddressFlags = map[HostAddressFlag]string{
 	HostAddressIP:        "type",
 	HostAddressInterface: "type",
-	HostAddressExternal:  "type",
+	HostAddressExternal:  "",
 	HostAddressHostname:  "type",
 	HostAddressIPv4Only:  "ip-version",
 	HostAddressIPv6Only:  "ip-version",

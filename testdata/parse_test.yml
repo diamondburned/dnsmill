@@ -127,3 +127,21 @@ providers:
 
 records:
   1.libdb.so: ipv4,ipv6!::1
+
+---
+# host address with interface,external,ipv4
+
+records:
+  1.libdb.so: interface,external,ipv4!eth0
+
+---
+# host address that is ipv4
+
+records:
+  1.libdb.so: ipv4!127.0.0.1
+
+---
+# host address that is ipv6
+
+records:
+  1.libdb.so: ipv6!::1
