@@ -145,3 +145,11 @@ records:
 
 records:
   1.libdb.so: ipv6!::1
+
+---
+# host address that is both ipv4 and ipv6 using multiple hosts
+
+records:
+  1.libdb.so:
+    - ipv4!127.0.0.1
+    - ipv6!::1
