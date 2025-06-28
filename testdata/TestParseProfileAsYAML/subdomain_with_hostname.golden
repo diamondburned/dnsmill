@@ -3,5 +3,7 @@ dnsmill.testResult[*libdb.so/dnsmill.Profile]{Result: &dnsmill.Profile{
 	Providers: map[string]dnsmill.ProviderConfig{"cloudflare": {
 		Zones: dnsmill.Domains{dnsmill.Domain("libdb.so")},
 	}},
-	Records: dnsmill.DomainRecords{dnsmill.Domain("local.libdb.so"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{"localhost"}}},
+	Records: dnsmill.DomainRecords{dnsmill.Domain("local.libdb.so"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{dnsmill.HostAddress{
+		Address: "localhost",
+	}}}},
 }}

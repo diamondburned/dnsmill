@@ -1,0 +1,33 @@
+dnsmill.testResult[*libdb.so/dnsmill.Profile]{Result: &dnsmill.Profile{
+	Config: dnsmill.Config{DuplicatePolicy: dnsmill.DuplicatePolicy("error")},
+	Providers: map[string]dnsmill.ProviderConfig{"cloudflare": {
+		Zones: dnsmill.Domains{dnsmill.Domain("libdb.so")},
+	}},
+	Records: dnsmill.DomainRecords{
+		dnsmill.Domain("1.libdb.so"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{dnsmill.HostAddress{
+			Address: "192.168.1.1",
+			Flags:   dnsmill.HostAddressFlags{dnsmill.HostAddressFlag("ipv4")},
+		}}},
+		dnsmill.Domain("2.libdb.so"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{dnsmill.HostAddress{
+			Address: "2001:db8::1",
+			Flags:   dnsmill.HostAddressFlags{dnsmill.HostAddressFlag("ipv6")},
+		}}},
+		dnsmill.Domain("3.libdb.so"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{dnsmill.HostAddress{
+			Address: "eth0",
+			Flags:   dnsmill.HostAddressFlags{dnsmill.HostAddressFlag("interface")},
+		}}},
+		dnsmill.Domain("4.libdb.so"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{dnsmill.HostAddress{Flags: dnsmill.HostAddressFlags{dnsmill.HostAddressFlag("external")}}}},
+		dnsmill.Domain("5.libdb.so"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{dnsmill.HostAddress{Flags: dnsmill.HostAddressFlags{
+			dnsmill.HostAddressFlag("external"),
+			dnsmill.HostAddressFlag("ipv4"),
+		}}}},
+		dnsmill.Domain("6.libdb.so"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{dnsmill.HostAddress{Flags: dnsmill.HostAddressFlags{
+			dnsmill.HostAddressFlag("external"),
+			dnsmill.HostAddressFlag("ipv6"),
+		}}}},
+		dnsmill.Domain("7.libdb.so"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{dnsmill.HostAddress{
+			Address: "libdb.so",
+			Flags:   dnsmill.HostAddressFlags{dnsmill.HostAddressFlag("hostname")},
+		}}},
+	},
+}}

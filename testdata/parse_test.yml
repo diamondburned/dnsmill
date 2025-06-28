@@ -99,3 +99,31 @@ providers:
       - libdb.so
 
 local.libdb.so: localhost
+
+---
+# host address type examples
+
+providers:
+  cloudflare:
+    zones:
+      - libdb.so
+
+records:
+  1.libdb.so: ipv4!192.168.1.1
+  2.libdb.so: ipv6!2001:db8::1
+  3.libdb.so: interface!eth0
+  4.libdb.so: external!
+  5.libdb.so: external,ipv4!
+  6.libdb.so: external,ipv6!
+  7.libdb.so: hostname!libdb.so
+
+---
+# host address with mutually exclusive flags
+
+providers:
+  cloudflare:
+    zones:
+      - libdb.so
+
+records:
+  1.libdb.so: ipv4,ipv6!::1

@@ -7,5 +7,7 @@ dnsmill.testResult[*libdb.so/dnsmill.Profile]{Result: &dnsmill.Profile{
 			dnsmill.Domain("d14.place"),
 		},
 	}},
-	Records: dnsmill.DomainRecords{dnsmill.Domain("local.libdb.so"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{"localhost"}}},
+	Records: dnsmill.DomainRecords{dnsmill.Domain("local.libdb.so"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{dnsmill.HostAddress{
+		Address: "localhost",
+	}}}},
 }}

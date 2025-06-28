@@ -4,8 +4,10 @@ dnsmill.testResult[*libdb.so/dnsmill.Profile]{Result: &dnsmill.Profile{
 		Zones: dnsmill.Domains{dnsmill.Domain("libdb.so")},
 	}},
 	Records: dnsmill.DomainRecords{dnsmill.Domain("local.libdb.so"): dnsmill.Records{Hosts: &dnsmill.HostAddresses{
-		"127.0.0.1",
-		"::1",
-		"localhost",
+		dnsmill.HostAddress{
+			Address: "127.0.0.1",
+		},
+		dnsmill.HostAddress{Address: "::1"},
+		dnsmill.HostAddress{Address: "localhost"},
 	}}},
 }}

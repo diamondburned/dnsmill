@@ -16,11 +16,22 @@ import (
 const ExternalIPProvider = "https://ifconfig.me/ip"
 
 // ResolveExternalIPs retrieves the external IP addresses of the machine.
-func ResolveExternalIPs(ctx context.Context) ([]net.IPAddr, error) {
-	addrs := make([]net.IPAddr, 0, 2)
+func ResolveExternalIPs(ctx context.Context, flags HostAddressFlags) ([]net.IPAddr, error) {
+	flagsIPv4Only := flags.Has(HostAddressIPv4Only)
+	flagsIPv6Only := flags.Has(HostAddressIPv6Only)
+
+	nets := []string{"tcp4", "tcp6"}
+	switch {
+	case flagsIPv4Only && !flagsIPv6Only:
+		nets = []string{"tcp4"}
+	case !flagsIPv4Only && flagsIPv6Only:
+		nets = []string{"tcp6"}
+	}
+
+	addrs := make([]net.IPAddr, 0, len(nets))
 	var errs []error
 
-	for _, net := range []string{"tcp4", "tcp6"} {
+	for _, net := range nets {
 		addr, err := resolveExternalIPForNetwork(ctx, net)
 		if err != nil {
 			errs = append(errs, fmt.Errorf(
