@@ -17,14 +17,11 @@ const ExternalIPProvider = "https://ifconfig.me/ip"
 
 // ResolveExternalIPs retrieves the external IP addresses of the machine.
 func ResolveExternalIPs(ctx context.Context, flags HostAddressFlags) ([]net.IPAddr, error) {
-	flagsIPv4Only := flags.Has(HostAddressIPv4Only)
-	flagsIPv6Only := flags.Has(HostAddressIPv6Only)
-
 	nets := []string{"tcp4", "tcp6"}
 	switch {
-	case flagsIPv4Only && !flagsIPv6Only:
+	case flags.Has(HostAddressIPv4Only):
 		nets = []string{"tcp4"}
-	case !flagsIPv4Only && flagsIPv6Only:
+	case flags.Has(HostAddressIPv6Only):
 		nets = []string{"tcp6"}
 	}
 

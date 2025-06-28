@@ -210,7 +210,16 @@ func (a HostAddress) resolveAsInterface(ctx context.Context) ([]net.IPAddr, erro
 
 	addrs := ifaceIPAddrs
 
-	if a.Flags.Has(HostAddressExternal) {
+	switch {
+	case a.Flags.Has(HostAddressIPv4Only):
+		addrs = slices.DeleteFunc(addrs, func(addr net.IPAddr) bool {
+			return addr.IP.To4() == nil // delete what's not v4
+		})
+	case a.Flags.Has(HostAddressIPv6Only):
+		addrs = slices.DeleteFunc(addrs, func(addr net.IPAddr) bool {
+			return addr.IP.To4() != nil // delete what is v4
+		})
+	case a.Flags.Has(HostAddressExternal):
 		externalIPs, err := ResolveExternalIPsForLocalAddrs(ctx, ifaceIPAddrs)
 		if err != nil {
 			return nil, fmt.Errorf(
