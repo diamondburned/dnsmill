@@ -43,8 +43,7 @@ config:
 providers:
   cloudflare: [libdb.so]
 
-libdb.so:
-  dnsmill_test: localhost
+dnsmill_test.libdb.so: localhost
 ```
 
 This profile sets the `dnsmill_test.libdb.so` record to `127.0.0.1` and `::1`.
@@ -72,6 +71,37 @@ Apr  6 03:36:03.702 INF applying fresh libdns record profile=profile.yml domain=
 Apr  6 03:36:05.557 INF applied libdns record profile=profile.yml domain=libdb.so provider=cloudflare record.id=37e833f8a80fabc9747adf6e94aae894 record.type=AAAA record.name=dnsmill_test record.value=::1
 Apr  6 03:36:05.557 INF applied libdns record profile=profile.yml domain=libdb.so provider=cloudflare record.id=47c54fd81e07ee8bde61ef0761838f01 record.type=A record.name=dnsmill_test record.value=127.0.0.1
 ```
+
+### Host Address Types
+
+In the above YAML example, our `localhost` is a "host address". This address is
+resolved to IP addresses by dnsmill and then applied to the DNS provider.
+
+dnsmill supports 4 types of host addresses:
+
+- IP address, which is used verbatim (IP must be valid, e.g. `127.0.0.1`)
+- Interface name, which is resolved to the interface's IP address (e.g. `eth0`)
+- Hostname, which is resolved to the host's IP address (e.g. `localhost` or
+  `example.com`) using the system's DNS resolver
+- External IP address via `external!`, which is resolved to the external IP
+  address of the network using `ifconfig.me`.
+
+It is possible to explicitly specify the type of host address by prefixing
+the host address string with a type followed by a `!`:
+
+- `ipv4!127.0.0.1` for an IPv4 address
+- `ipv6!::1` for an IPv6 address
+- `interface!eth0` for an interface name, optionally with:
+  - `interface,ipv4!eth0` for the IPv4 addresses of the interface,
+  - `interface,ipv6!eth0` for the IPv6 addresses of the interface, and
+  - `interface,external!eth0` to resolve all internal IP addresses of the
+    interface to external IP addresses
+    - You can combine the `ipv4` and `ipv6` flags here, too
+- `hostname!example.com` for a hostname
+- `external!` for the external IP address, optionally with:
+  - `external,ipv4!` for the external IPv4 addresses only, and
+  - `external,ipv6!` for the external IPv6 addresses only
+  - There must be no host address after the `!` delimiter
 
 ## Extending
 
