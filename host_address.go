@@ -219,14 +219,15 @@ func (a HostAddress) resolveAsInterface(ctx context.Context) ([]net.IPAddr, erro
 		addrs = slices.DeleteFunc(addrs, func(addr net.IPAddr) bool {
 			return addr.IP.To4() != nil // delete what is v4
 		})
-	case a.Flags.Has(HostAddressExternal):
-		externalIPs, err := ResolveExternalIPsForLocalAddrs(ctx, ifaceIPAddrs)
+	}
+
+	if a.Flags.Has(HostAddressExternal) {
+		addrs, err = ResolveExternalIPsForLocalAddrs(ctx, addrs)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to resolve external IPs for interface %q using %q: %w",
 				a.Address, ExternalIPProvider, err)
 		}
-		addrs = externalIPs
 	}
 
 	return addrs, nil
