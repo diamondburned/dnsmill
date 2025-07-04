@@ -11,6 +11,9 @@
         services.dnsmill = {
           enable = true;
           profiles."test" = {
+            environment = {
+              CLOUDFLARE_API_TOKEN = "hi";
+            };
             config = {
               duplicatePolicy = "overwrite";
             };
@@ -21,9 +24,6 @@
               "test1.libdb.so".hosts = "localhost";
               "test2.libdb.so".cname = "test1.libdb.so";
             };
-          };
-          environment = {
-            CLOUDFLARE_API_TOKEN = "hi";
           };
         };
       };

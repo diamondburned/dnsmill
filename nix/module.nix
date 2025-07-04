@@ -21,6 +21,22 @@ let
         '';
       };
 
+      environment = mkOption {
+        type = types.attrsOf types.str;
+        default = { };
+        description = ''
+          The environment variables to use for dnsmill.
+        '';
+      };
+
+      environmentFile = mkOption {
+        type = types.nullOr types.path;
+        default = null;
+        description = ''
+          The environment file to use for dnsmill.
+        '';
+      };
+
       config = mkOption {
         type = profileConfigType;
         default = { };
@@ -132,22 +148,6 @@ in
       readOnly = true;
     };
 
-    environment = mkOption {
-      type = types.attrsOf types.str;
-      default = { };
-      description = ''
-        The environment variables to use for dnsmill.
-      '';
-    };
-
-    environmentFile = mkOption {
-      type = types.nullOr types.path;
-      default = null;
-      description = ''
-        The environment file to use for dnsmill.
-      '';
-    };
-
     package = mkOption {
       type = types.package;
       default = self.packages.${pkgs.system}.dnsmill;
@@ -165,7 +165,13 @@ in
     services.dnsmill.finalProfiles = mapAttrs (
       profileName: profile:
       let
-        finalJSON = builtins.toJSON (removeAttrs profile [ "enable" ]);
+        finalJSON = builtins.toJSON (
+          removeAttrs profile [
+            "enable"
+            "environment"
+            "environmentFile"
+          ]
+        );
       in
       pkgs.writeText "dnsmill-profile-${profileName}.json" finalJSON
     ) config.services.dnsmill.profiles;
@@ -177,7 +183,7 @@ in
             "dnsmill@${profileName}" = {
               enable = profile.enable;
               description = "dnsmill profile ${profileName}";
-              environment = config.services.dnsmill.environment;
+              environment = profile.environment;
               serviceConfig = {
                 Type = "oneshot";
                 ExecStart = escapeShellArgs [
@@ -188,7 +194,7 @@ in
                 ];
                 Restart = "on-failure";
                 RestartSec = 5;
-                EnvironmentFile = config.services.dnsmill.environmentFile;
+                EnvironmentFile = profile.environmentFile;
               };
               startLimitBurst = 3;
               startLimitIntervalSec = 5 * 60; # 5 minutes;
