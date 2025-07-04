@@ -34,6 +34,7 @@ func ResolveExternalIPs(ctx context.Context, flags HostAddressFlags) ([]net.IPAd
 			errs = append(errs, fmt.Errorf(
 				"failed to resolve external IP using %q: %w",
 				net, err))
+			continue
 		}
 		addrs = append(addrs, *addr)
 	}
