@@ -216,7 +216,7 @@ func (a HostAddress) resolveAsInterface(ctx context.Context) ([]net.IPAddr, erro
 
 	if !a.Flags.Has(HostAddressIncludeNonGlobalUnicast) {
 		addrs = slices.DeleteFunc(addrs, func(addr net.IPAddr) bool {
-			return addr.IP.IsGlobalUnicast()
+			return !addr.IP.IsGlobalUnicast()
 		})
 	}
 
