@@ -220,12 +220,19 @@ func (a HostAddress) resolveAsInterface(ctx context.Context) ([]net.IPAddr, erro
 		})
 	}
 
-	switch {
-	case a.Flags.Has(HostAddressIPv4Only):
+	if !a.Flags.Has(HostAddressIncludePrivate) {
+		addrs = slices.DeleteFunc(addrs, func(addr net.IPAddr) bool {
+			return addr.IP.IsPrivate() || addr.IP.IsLoopback()
+		})
+	}
+
+	if a.Flags.Has(HostAddressIPv4Only) {
 		addrs = slices.DeleteFunc(addrs, func(addr net.IPAddr) bool {
 			return addr.IP.To4() == nil // delete what's not v4
 		})
-	case a.Flags.Has(HostAddressIPv6Only):
+	}
+
+	if a.Flags.Has(HostAddressIPv6Only) {
 		addrs = slices.DeleteFunc(addrs, func(addr net.IPAddr) bool {
 			return addr.IP.To4() != nil // delete what is v4
 		})
@@ -257,11 +264,24 @@ func (a HostAddress) resolveAsExternal(ctx context.Context) ([]net.IPAddr, error
 }
 
 func (a HostAddress) resolveAsHostname(ctx context.Context) ([]net.IPAddr, error) {
-	resolved, err := net.DefaultResolver.LookupIPAddr(ctx, a.Address)
+	addrs, err := net.DefaultResolver.LookupIPAddr(ctx, a.Address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve hostname %q: %w", a.Address, err)
 	}
-	return resolved, nil
+
+	if a.Flags.Has(HostAddressIPv4Only) {
+		addrs = slices.DeleteFunc(addrs, func(addr net.IPAddr) bool {
+			return addr.IP.To4() == nil // delete what's not v4
+		})
+	}
+
+	if a.Flags.Has(HostAddressIPv6Only) {
+		addrs = slices.DeleteFunc(addrs, func(addr net.IPAddr) bool {
+			return addr.IP.To4() != nil // delete what is v4
+		})
+	}
+
+	return addrs, nil
 }
 
 // HostAddressFlags represents a list of host address flags.
@@ -344,6 +364,9 @@ const (
 	// HostAddressIncludeNonGlobalUnicast is a modifier for
 	// [HostAddressInterface].
 	HostAddressIncludeNonGlobalUnicast HostAddressFlag = "include-non-global-unicast"
+	// HostAddressIncludePrivate is a modifier for [HostAddressInterface] to
+	// include private and loopback IPs.
+	HostAddressIncludePrivate HostAddressFlag = "include-private"
 )
 
 // map of valid host address flags to flag type, which is used for mutual
