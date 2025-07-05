@@ -214,6 +214,12 @@ func (a HostAddress) resolveAsInterface(ctx context.Context) ([]net.IPAddr, erro
 
 	addrs := ifaceIPAddrs
 
+	if !a.Flags.Has(HostAddressIncludeNonGlobalUnicast) {
+		addrs = slices.DeleteFunc(addrs, func(addr net.IPAddr) bool {
+			return addr.IP.IsGlobalUnicast()
+		})
+	}
+
 	switch {
 	case a.Flags.Has(HostAddressIPv4Only):
 		addrs = slices.DeleteFunc(addrs, func(addr net.IPAddr) bool {
@@ -335,6 +341,9 @@ const (
 const (
 	HostAddressIPv4Only HostAddressFlag = "ipv4"
 	HostAddressIPv6Only HostAddressFlag = "ipv6"
+	// HostAddressIncludeNonGlobalUnicast is a modifier for
+	// [HostAddressInterface].
+	HostAddressIncludeNonGlobalUnicast HostAddressFlag = "include-non-global-unicast"
 )
 
 // map of valid host address flags to flag type, which is used for mutual
